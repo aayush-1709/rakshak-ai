@@ -71,7 +71,7 @@ function normalizeConfidenceScore(value) {
 }
 
 app.get('/health', (_req, res) => {
-  res.json({ ok: true, service: 'civic-dev-backend' });
+  res.json({ ok: true, service: 'rakshak-ai-backend' });
 });
 
 app.post('/api/analyze-issue', upload.single('image'), async (req, res) => {

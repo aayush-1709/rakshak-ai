@@ -1,6 +1,6 @@
-# Civic Dev Backend
+# Rakshak AI Backend
 
-Backend service for the Civic dashboard frontend.
+Backend service for the Rakshak AI dashboard frontend.
 
 ## Endpoints
 
@@ -27,3 +27,21 @@ Backend service for the Civic dashboard frontend.
    - `npm run dev`
 
 Default URL: `http://localhost:8000`
+
+## Deploy On Render
+
+You can deploy this backend as a Render Web Service.
+
+- **Root Directory**: `backend`
+- **Build Command**: `npm install`
+- **Start Command**: `npm start`
+- **Health Check Path**: `/health`
+
+Set these environment variables in Render:
+
+- `FRONTEND_ORIGIN` = your Vercel frontend URL (for example `https://your-app.vercel.app`)
+- `DATABASE_URL` = your hosted PostgreSQL connection string
+- `GEMINI_API_KEYS` = comma-separated Gemini keys
+- `GEMINI_MODEL` = `gemini-2.5-flash` (optional; defaults if not set)
+
+This repo also includes a root `render.yaml` blueprint you can use for one-click setup.
