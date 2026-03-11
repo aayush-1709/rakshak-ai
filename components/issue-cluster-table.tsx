@@ -33,7 +33,7 @@ export default function IssueClusterTable({
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
-          <Table>
+          <Table className="min-w-[900px]">
             <TableHeader className="bg-slate-50">
               <TableRow className="border-slate-200">
                 <TableHead className="text-slate-700 font-semibold">ID</TableHead>

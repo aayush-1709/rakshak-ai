@@ -245,9 +245,9 @@ export default function AIReportModal({ isOpen, onClose }: AIReportModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] max-w-2xl max-h-[85vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle className="text-2xl">
+          <DialogTitle className="text-xl sm:text-2xl">
             AI-Generated Weekly Rakshak AI Report
           </DialogTitle>
           <DialogDescription className="sr-only">
@@ -298,7 +298,7 @@ export default function AIReportModal({ isOpen, onClose }: AIReportModalProps) {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
                 <p className="text-xs text-slate-600 font-medium">Total Complaints</p>
                 <p className="text-xl font-bold text-slate-900">{report.total_complaints}</p>
@@ -372,7 +372,7 @@ export default function AIReportModal({ isOpen, onClose }: AIReportModalProps) {
             </div>
 
             {/* Actions */}
-            <div className="flex gap-3 pt-4 border-t border-slate-200">
+            <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-slate-200">
               <Button
                 onClick={handleDownload}
                 className="flex-1 bg-slate-900 hover:bg-slate-800 text-white"

@@ -104,7 +104,7 @@ export default function CivicDashboard() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-50 to-slate-100">
       <Navbar onMockModeChanged={loadClusters} />
       
-      <div className="flex flex-col lg:flex-row gap-6 p-4 lg:p-6 max-w-7xl mx-auto">
+      <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 p-3 sm:p-4 lg:p-6 max-w-7xl mx-auto">
         {/* Left Panel - 30% */}
         <div className="w-full lg:w-[30%] space-y-4">
           <ReportIssueForm key={formKey} onAnalysisComplete={handleNewAnalysis} />
@@ -127,9 +127,13 @@ export default function CivicDashboard() {
           <CivicChatbot />
 
           <Tabs defaultValue="clusters" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="clusters">Cluster Dashboard</TabsTrigger>
-              <TabsTrigger value="complaints">Pincode Complaints Dashboard</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 h-auto gap-2">
+              <TabsTrigger value="clusters" className="text-xs sm:text-sm">
+                Cluster Dashboard
+              </TabsTrigger>
+              <TabsTrigger value="complaints" className="text-xs sm:text-sm whitespace-normal text-center">
+                Pincode Complaints Dashboard
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="clusters" className="space-y-4">

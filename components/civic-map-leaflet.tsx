@@ -342,7 +342,7 @@ export default function CivicMapLeaflet({
   return (
     <Card className="border-slate-200 bg-white overflow-hidden">
       <CardContent className="p-0">
-        <div className="relative w-full h-80 border border-slate-200 rounded-lg overflow-hidden bg-slate-100">
+        <div className="relative w-full h-72 sm:h-80 border border-slate-200 rounded-lg overflow-hidden bg-slate-100">
           {isLoading && (
             <div className="absolute inset-0 z-[500] flex items-center justify-center bg-white/80">
               <div className="flex items-center gap-2 text-slate-700">
@@ -360,17 +360,17 @@ export default function CivicMapLeaflet({
             </div>
           )}
 
-          <div className="absolute top-3 left-3 z-10 flex items-center gap-2">
+          <div className="absolute top-3 left-3 right-3 z-10 flex items-center gap-2 overflow-x-auto pr-2">
             <Badge variant="secondary" className="bg-white/90 text-slate-700">
               {clusters.length} Clusters
             </Badge>
-            <Badge variant="secondary" className="bg-red-100 text-red-800 border border-red-200">
+            <Badge variant="secondary" className="bg-red-100 text-red-800 border border-red-200 whitespace-nowrap">
               High: Red
             </Badge>
-            <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border border-yellow-200">
+            <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border border-yellow-200 whitespace-nowrap">
               Low: Yellow
             </Badge>
-            <Badge variant="secondary" className="bg-green-100 text-green-800 border border-green-200">
+            <Badge variant="secondary" className="bg-green-100 text-green-800 border border-green-200 whitespace-nowrap">
               Less/None: Green
             </Badge>
           </div>

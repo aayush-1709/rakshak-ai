@@ -102,7 +102,7 @@ export default function ComplaintsDashboard({ refreshKey }: ComplaintsDashboardP
         </div>
 
         <div className="overflow-x-auto">
-          <Table>
+          <Table className="min-w-[860px]">
             <TableHeader className="bg-slate-50">
               <TableRow className="border-slate-200">
                 <TableHead>Complaint ID</TableHead>
