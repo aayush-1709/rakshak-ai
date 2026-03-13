@@ -73,12 +73,18 @@ async function initDb() {
       status TEXT NOT NULL,
       address TEXT NOT NULL,
       image_data_url TEXT,
+      video_data_url TEXT,
       ai_summary TEXT,
       latitude DOUBLE PRECISION NOT NULL,
       longitude DOUBLE PRECISION NOT NULL,
       confidence_score DOUBLE PRECISION NOT NULL DEFAULT 80,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+  `);
+
+  await pool.query(`
+    ALTER TABLE complaints
+    ADD COLUMN IF NOT EXISTS video_data_url TEXT;
   `);
 
   await pool.query(`
@@ -103,6 +109,7 @@ function mapRow(row) {
     status: row.status,
     address: row.address,
     image_data_url: row.image_data_url || undefined,
+    video_data_url: row.video_data_url || undefined,
     ai_summary: row.ai_summary || undefined,
     latitude: Number(row.latitude),
     longitude: Number(row.longitude),
@@ -114,7 +121,7 @@ function mapRow(row) {
 async function getComplaints() {
   const result = await pool.query(
     `SELECT complaint_id, cluster_id, issue_type, description, pincode, risk_level, status, address,
-            image_data_url, ai_summary, latitude, longitude, confidence_score, created_at
+            image_data_url, video_data_url, ai_summary, latitude, longitude, confidence_score, created_at
      FROM complaints
      ORDER BY created_at DESC`
   );
@@ -125,10 +132,10 @@ async function addComplaint(complaint) {
   await pool.query(
     `INSERT INTO complaints (
       complaint_id, cluster_id, issue_type, description, pincode, risk_level, status, address,
-      image_data_url, ai_summary, latitude, longitude, confidence_score, created_at
+      image_data_url, video_data_url, ai_summary, latitude, longitude, confidence_score, created_at
     ) VALUES (
       $1, $2, $3, $4, $5, $6, $7, $8,
-      $9, $10, $11, $12, $13, $14
+      $9, $10, $11, $12, $13, $14, $15
     )`,
     [
       complaint.complaint_id,
@@ -140,6 +147,7 @@ async function addComplaint(complaint) {
       complaint.status,
       complaint.address,
       complaint.image_data_url || null,
+      complaint.video_data_url || null,
       complaint.ai_summary || null,
       complaint.latitude,
       complaint.longitude,

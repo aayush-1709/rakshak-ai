@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/select';
 import { ClusterSortBy, IssueFilters, RISK_LEVELS, RiskLevel } from '@/lib/types';
 import { formatRiskLabel } from '@/utils/priority';
+import { useLanguage } from './language-provider';
 
 interface FiltersPanelProps {
   onFilterChange: (filters: IssueFilters) => void;
@@ -29,6 +30,7 @@ export default function FiltersPanel({
   currentSort,
   issueTypes,
 }: FiltersPanelProps) {
+  const { t } = useLanguage();
   const handleRiskLevelChange = (value: string) => {
     onFilterChange({
       ...currentFilters,
@@ -58,21 +60,19 @@ export default function FiltersPanel({
   return (
     <Card className="border-slate-200 bg-white">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg">Filters & Sort</CardTitle>
+        <CardTitle className="text-lg">{t('filters.title')}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           {/* Risk Level Filter */}
           <div>
-            <Label className="text-sm font-medium text-slate-700 mb-2 block">
-              Risk Level
-            </Label>
+            <Label className="text-sm font-medium text-slate-700 mb-2 block">{t('filters.riskLevel')}</Label>
             <Select value={currentFilters.riskLevel || 'all'} onValueChange={handleRiskLevelChange}>
               <SelectTrigger className="border-slate-300">
-                <SelectValue placeholder="All Levels" />
+                <SelectValue placeholder={t('filters.allLevels')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Levels</SelectItem>
+                <SelectItem value="all">{t('filters.allLevels')}</SelectItem>
                 {RISK_LEVELS.map((level) => (
                   <SelectItem key={level} value={level}>
                     {formatRiskLabel(level)}
@@ -84,15 +84,13 @@ export default function FiltersPanel({
 
           {/* Issue Type Filter */}
           <div>
-            <Label className="text-sm font-medium text-slate-700 mb-2 block">
-              Issue Type
-            </Label>
+            <Label className="text-sm font-medium text-slate-700 mb-2 block">{t('filters.issueType')}</Label>
             <Select value={currentFilters.issueType || 'all'} onValueChange={handleIssueTypeChange}>
               <SelectTrigger className="border-slate-300">
-                <SelectValue placeholder="All Types" />
+                <SelectValue placeholder={t('filters.allTypes')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="all">{t('filters.allTypes')}</SelectItem>
                 {issueTypes.map((type) => (
                   <SelectItem key={type} value={type}>
                     {type}
@@ -104,11 +102,9 @@ export default function FiltersPanel({
 
           {/* Pincode Filter */}
           <div>
-            <Label className="text-sm font-medium text-slate-700 mb-2 block">
-              Pincode
-            </Label>
+            <Label className="text-sm font-medium text-slate-700 mb-2 block">{t('filters.pincode')}</Label>
             <Input
-              placeholder="Filter..."
+              placeholder={t('filters.filterPlaceholder')}
               value={currentFilters.pincode || ''}
               onChange={(e) => handlePincodeChange(e.target.value)}
               className="border-slate-300"
@@ -117,16 +113,14 @@ export default function FiltersPanel({
 
           {/* Sort By */}
           <div>
-            <Label className="text-sm font-medium text-slate-700 mb-2 block">
-              Sort By
-            </Label>
+            <Label className="text-sm font-medium text-slate-700 mb-2 block">{t('filters.sortBy')}</Label>
             <Select value={currentSort} onValueChange={(value) => onSortChange(value as ClusterSortBy)}>
               <SelectTrigger className="border-slate-300">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="priority_score">Priority Score</SelectItem>
-                <SelectItem value="complaint_count">Complaint Count</SelectItem>
+                <SelectItem value="priority_score">{t('filters.sortPriority')}</SelectItem>
+                <SelectItem value="complaint_count">{t('filters.sortCount')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -138,7 +132,7 @@ export default function FiltersPanel({
               variant="outline"
               className="w-full border-slate-300"
             >
-              Reset
+              {t('action.reset')}
             </Button>
           </div>
         </div>

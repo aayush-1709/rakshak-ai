@@ -6,12 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Spinner } from '@/components/ui/spinner';
 import { getApiBaseUrl } from '@/lib/api';
+import { useLanguage } from './language-provider';
 
 type EndpointStatus = 'ok' | 'down' | 'checking';
 
 interface EndpointCheckResult {
   id: string;
-  label: string;
+  labelKey: string;
   endpoint: string;
   displayEndpoint: string;
   method: 'GET' | 'POST';
@@ -23,29 +24,29 @@ interface EndpointCheckResult {
 
 const CHECKS: Array<{
   id: string;
-  label: string;
+  labelKey: string;
   endpoint: string;
   displayEndpoint?: string;
   method: 'GET' | 'POST';
 }> = [
   {
     id: 'analyze',
-    label: 'Analyze Issue',
+    labelKey: 'validator.analyzeIssue',
     endpoint: '/api/analyze-issue',
     method: 'POST',
   },
   {
     id: 'submit',
-    label: 'Submit Issue',
+    labelKey: 'validator.submitIssue',
     endpoint: '/api/submit-issue',
     method: 'POST',
   },
-  { id: 'clusters', label: 'Issue Clusters', endpoint: '/api/issue-clusters', method: 'GET' },
-  { id: 'report', label: 'Generate Report', endpoint: '/api/generate-report', method: 'GET' },
-  { id: 'complaints', label: 'Complaints', endpoint: '/api/complaints', method: 'GET' },
+  { id: 'clusters', labelKey: 'validator.issueClusters', endpoint: '/api/issue-clusters', method: 'GET' },
+  { id: 'report', labelKey: 'validator.generateReport', endpoint: '/api/generate-report', method: 'GET' },
+  { id: 'complaints', labelKey: 'validator.complaints', endpoint: '/api/complaints', method: 'GET' },
   {
     id: 'cluster-complaints',
-    label: 'Cluster Complaints',
+    labelKey: 'validator.clusterComplaints',
     endpoint: '/api/cluster-complaints?cluster_id=validator',
     displayEndpoint: '/api/cluster-complaints',
     method: 'GET',
@@ -92,17 +93,18 @@ function buildRequestInit(checkId: string, method: 'GET' | 'POST'): RequestInit 
   return { method };
 }
 
-function statusBadge(status: EndpointStatus) {
-  if (status === 'ok') return <Badge className="bg-green-100 text-green-900">OK</Badge>;
-  if (status === 'down') return <Badge className="bg-red-100 text-red-900">Down</Badge>;
-  return <Badge className="bg-slate-200 text-slate-800">Checking</Badge>;
+function statusBadge(status: EndpointStatus, t: (key: string) => string) {
+  if (status === 'ok') return <Badge className="bg-green-100 text-green-900">{t('status.ok')}</Badge>;
+  if (status === 'down') return <Badge className="bg-red-100 text-red-900">{t('status.down')}</Badge>;
+  return <Badge className="bg-slate-200 text-slate-800">{t('status.checking')}</Badge>;
 }
 
 export default function ApiValidatorPanel() {
+  const { t } = useLanguage();
   const [results, setResults] = useState<EndpointCheckResult[]>(
     CHECKS.map((item) => ({
       id: item.id,
-      label: item.label,
+      labelKey: item.labelKey,
       endpoint: item.endpoint,
       displayEndpoint: item.displayEndpoint ?? item.endpoint,
       method: item.method,
@@ -130,24 +132,24 @@ export default function ApiValidatorPanel() {
           const ok = response.status !== 404 && response.status < 500;
           return {
             id: item.id,
-            label: item.label,
+            labelKey: item.labelKey,
             endpoint: item.endpoint,
             displayEndpoint: item.displayEndpoint ?? item.endpoint,
             method: item.method,
             status: ok ? 'ok' : 'down',
             httpStatus: response.status,
             latencyMs,
-            note: ok ? undefined : 'Endpoint unreachable or server error',
+            note: ok ? undefined : t('validator.endpointUnreachable'),
           };
         } catch (error) {
           return {
             id: item.id,
-            label: item.label,
+            labelKey: item.labelKey,
             endpoint: item.endpoint,
             displayEndpoint: item.displayEndpoint ?? item.endpoint,
             method: item.method,
             status: 'down',
-            note: error instanceof Error ? error.message : 'Network error',
+            note: error instanceof Error ? error.message : t('validator.networkError'),
           };
         }
       })
@@ -165,19 +167,19 @@ export default function ApiValidatorPanel() {
     <Card className="border-slate-200 bg-white">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between gap-2">
-          <CardTitle className="text-lg">API Validator</CardTitle>
+          <CardTitle className="text-lg">{t('validator.title')}</CardTitle>
           <Button size="sm" variant="outline" onClick={checkEndpoints} disabled={isChecking}>
             {isChecking ? (
               <span className="flex items-center gap-1">
                 <Spinner className="w-3 h-3" />
-                Checking
+                {t('status.checking')}
               </span>
             ) : (
-              'Recheck'
+              t('action.recheck')
             )}
           </Button>
         </div>
-        <p className="text-xs text-slate-500">Base URL: {baseUrlLabel}</p>
+        <p className="text-xs text-slate-500">{t('validator.baseUrl')}: {baseUrlLabel}</p>
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
@@ -190,11 +192,11 @@ export default function ApiValidatorPanel() {
                 <p className="text-sm font-medium text-slate-900">
                   {item.method} {item.displayEndpoint}
                 </p>
-                <p className="text-xs text-slate-500">{item.label}</p>
+                <p className="text-xs text-slate-500">{t(item.labelKey)}</p>
                 {item.note && <p className="text-xs text-red-600 mt-1">{item.note}</p>}
               </div>
               <div className="text-right">
-                <div>{statusBadge(item.status)}</div>
+                <div>{statusBadge(item.status, t)}</div>
                 {(item.httpStatus || item.latencyMs) && (
                   <p className="text-xs text-slate-500 mt-1">
                     {item.httpStatus ? `HTTP ${item.httpStatus}` : ''}{' '}

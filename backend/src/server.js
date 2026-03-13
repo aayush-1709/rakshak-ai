@@ -117,6 +117,7 @@ app.post('/api/submit-issue', async (req, res) => {
     const description = String(req.body.description || '').trim();
     const address = String(req.body.address || '').trim();
     const image_data_url = typeof req.body.image_data_url === 'string' ? req.body.image_data_url : '';
+    const video_data_url = typeof req.body.video_data_url === 'string' ? req.body.video_data_url : '';
     const ai_summary = String(req.body.ai_summary || '').trim();
     const pincode = String(req.body.pincode || '').trim();
     const latitude = toNumber(req.body.latitude, 'latitude');
@@ -140,6 +141,7 @@ app.post('/api/submit-issue', async (req, res) => {
       status: 'open',
       address: address || `Pincode ${pincode}`,
       image_data_url,
+      video_data_url,
       latitude,
       longitude,
       confidence_score,

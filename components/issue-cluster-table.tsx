@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/table';
 import RiskBadge from '@/components/risk-badge';
 import { IssueCluster } from '@/lib/types';
+import { useLanguage } from './language-provider';
 
 interface IssueClusterTableProps {
   clusters: IssueCluster[];
@@ -26,32 +27,33 @@ export default function IssueClusterTable({
   error,
   onClusterSelect,
 }: IssueClusterTableProps) {
+  const { t } = useLanguage();
   return (
     <Card className="border-slate-200 bg-white">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg">Issue Clusters ({clusters.length})</CardTitle>
+        <CardTitle className="text-lg">{t('issueTable.title', { count: clusters.length })}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
           <Table className="min-w-[900px]">
             <TableHeader className="bg-slate-50">
               <TableRow className="border-slate-200">
-                <TableHead className="text-slate-700 font-semibold">ID</TableHead>
-                <TableHead className="text-slate-700 font-semibold">Issue Type</TableHead>
-                <TableHead className="text-slate-700 font-semibold">Pincode</TableHead>
-                <TableHead className="text-slate-700 font-semibold">Risk</TableHead>
-                <TableHead className="text-slate-700 font-semibold">Department</TableHead>
+                <TableHead className="text-slate-700 font-semibold">{t('issueTable.id')}</TableHead>
+                <TableHead className="text-slate-700 font-semibold">{t('issueTable.issueType')}</TableHead>
+                <TableHead className="text-slate-700 font-semibold">{t('issueTable.pincode')}</TableHead>
+                <TableHead className="text-slate-700 font-semibold">{t('issueTable.risk')}</TableHead>
+                <TableHead className="text-slate-700 font-semibold">{t('issueTable.department')}</TableHead>
                 <TableHead className="text-right text-slate-700 font-semibold">
-                  Complaints
+                  {t('issueTable.complaints')}
                 </TableHead>
                 <TableHead className="text-right text-slate-700 font-semibold">
-                  Priority
+                  {t('issueTable.priority')}
                 </TableHead>
                 <TableHead className="text-right text-slate-700 font-semibold">
-                  Confidence
+                  {t('issueTable.confidence')}
                 </TableHead>
                 <TableHead className="text-right text-slate-700 font-semibold">
-                  Days Pending
+                  {t('issueTable.daysPending')}
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -94,7 +96,7 @@ export default function IssueClusterTable({
                           <RiskBadge level={cluster.risk_level} />
                         </TableCell>
                         <TableCell className="text-sm text-slate-700">
-                          {cluster.responsible_department || 'Pending assignment'}
+                          {cluster.responsible_department || t('issueTable.pendingAssignment')}
                         </TableCell>
                         <TableCell className="text-right text-sm font-semibold text-slate-900">
                           {cluster.complaint_count}
@@ -113,7 +115,7 @@ export default function IssueClusterTable({
                   : (
                     <TableRow className="border-slate-200">
                       <TableCell colSpan={9} className="text-center py-8 text-slate-500">
-                        No clusters found
+                        {t('issueTable.noClusters')}
                       </TableCell>
                     </TableRow>
                   )}

@@ -3,12 +3,14 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { IssueCluster } from '@/lib/types';
 import { calculateSeverityWeight } from '@/utils/priority';
+import { useLanguage } from './language-provider';
 
 interface AnalyticsOverviewProps {
   clusters: IssueCluster[];
 }
 
 export default function AnalyticsOverview({ clusters }: AnalyticsOverviewProps) {
+  const { t } = useLanguage();
   const byPincode = clusters.reduce<Record<string, IssueCluster[]>>((acc, cluster) => {
     if (!acc[cluster.pincode]) {
       acc[cluster.pincode] = [];
@@ -54,29 +56,33 @@ export default function AnalyticsOverview({ clusters }: AnalyticsOverviewProps) 
 
   const analytics = [
     {
-      title: 'Top Risk Zone',
+      title: t('overview.topRiskZone'),
       value: topRiskZone?.pincode ?? 'N/A',
-      subtitle: topRiskZone ? `Avg Priority ${topRiskZone.avgPriority.toFixed(1)}` : 'No data',
+      subtitle: topRiskZone
+        ? `${t('overview.avgPriority')} ${topRiskZone.avgPriority.toFixed(1)}`
+        : t('overview.noData'),
       color: 'bg-red-50',
     },
     {
-      title: 'Most Common Issue Type',
+      title: t('overview.mostCommonIssue'),
       value: mostCommonIssue?.[0] ?? 'N/A',
-      subtitle: mostCommonIssue ? `${mostCommonIssue[1]} clusters` : 'No data',
+      subtitle: mostCommonIssue ? `${mostCommonIssue[1]} ${t('overview.clusters')}` : t('overview.noData'),
       color: 'bg-orange-50',
     },
     {
-      title: 'Escalating Zone',
+      title: t('overview.escalatingZone'),
       value: escalatingZone?.pincode ?? 'N/A',
-      subtitle: escalatingZone ? `Growth ${escalatingZone.growthIndex.toFixed(1)}` : 'No data',
+      subtitle: escalatingZone
+        ? `${t('overview.growth')} ${escalatingZone.growthIndex.toFixed(1)}`
+        : t('overview.noData'),
       color: 'bg-yellow-50',
     },
     {
-      title: 'Predicted Critical Area',
+      title: t('overview.predictedCritical'),
       value: predictedCritical?.pincode ?? 'N/A',
       subtitle: predictedCritical
-        ? `Risk x Count ${predictedCritical.severityScore.toFixed(0)}`
-        : 'No data',
+        ? `${t('overview.riskCount')} ${predictedCritical.severityScore.toFixed(0)}`
+        : t('overview.noData'),
       color: 'bg-blue-50',
     },
   ];

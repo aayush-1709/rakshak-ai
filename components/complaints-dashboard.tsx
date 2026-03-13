@@ -23,12 +23,14 @@ import RiskBadge from '@/components/risk-badge';
 import { getComplaints } from '@/lib/api';
 import { Complaint } from '@/lib/types';
 import { toast } from 'sonner';
+import { useLanguage } from './language-provider';
 
 interface ComplaintsDashboardProps {
   refreshKey: number;
 }
 
 export default function ComplaintsDashboard({ refreshKey }: ComplaintsDashboardProps) {
+  const { t } = useLanguage();
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -44,7 +46,7 @@ export default function ComplaintsDashboard({ refreshKey }: ComplaintsDashboardP
         setComplaints(data);
       } catch (err) {
         const message =
-          err instanceof Error ? err.message : 'Unable to fetch complaints.';
+          err instanceof Error ? err.message : t('complaints.fetchError');
         setError(message);
         toast.error(message);
       } finally {
@@ -75,23 +77,23 @@ export default function ComplaintsDashboard({ refreshKey }: ComplaintsDashboardP
     <Card className="border-slate-200 bg-white">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg">
-          Complaints Dashboard ({filteredComplaints.length})
+          {t('complaints.title', { count: filteredComplaints.length })}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <Input
-            placeholder="Search by pincode..."
+            placeholder={t('complaints.searchByPincode')}
             value={pincodeFilter}
             onChange={(event) => setPincodeFilter(event.target.value)}
             className="border-slate-300"
           />
           <Select value={issueTypeFilter} onValueChange={setIssueTypeFilter}>
             <SelectTrigger className="border-slate-300">
-              <SelectValue placeholder="All issue types" />
+              <SelectValue placeholder={t('complaints.allIssueTypes')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All issue types</SelectItem>
+              <SelectItem value="all">{t('complaints.allIssueTypes')}</SelectItem>
               {issueTypes.map((issueType) => (
                 <SelectItem key={issueType} value={issueType}>
                   {issueType}
@@ -105,13 +107,13 @@ export default function ComplaintsDashboard({ refreshKey }: ComplaintsDashboardP
           <Table className="min-w-[860px]">
             <TableHeader className="bg-slate-50">
               <TableRow className="border-slate-200">
-                <TableHead>Complaint ID</TableHead>
-                <TableHead>Registered At</TableHead>
-                <TableHead>Issue Type</TableHead>
-                <TableHead>Pincode</TableHead>
-                <TableHead>Risk</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Address</TableHead>
+                <TableHead>{t('complaints.complaintId')}</TableHead>
+                <TableHead>{t('complaints.registeredAt')}</TableHead>
+                <TableHead>{t('filters.issueType')}</TableHead>
+                <TableHead>{t('filters.pincode')}</TableHead>
+                <TableHead>{t('issueTable.risk')}</TableHead>
+                <TableHead>{t('complaints.status')}</TableHead>
+                <TableHead>{t('complaints.address')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -154,7 +156,7 @@ export default function ComplaintsDashboard({ refreshKey }: ComplaintsDashboardP
                     : (
                       <TableRow className="border-slate-200">
                         <TableCell colSpan={7} className="text-center py-8 text-slate-500">
-                          No complaints found
+                          {t('complaints.noComplaints')}
                         </TableCell>
                       </TableRow>
                     )}

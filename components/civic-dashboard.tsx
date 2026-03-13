@@ -24,8 +24,10 @@ import ComplaintsDashboard from './complaints-dashboard';
 import CivicChatbot from './civic-chatbot';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ApiValidatorPanel from './api-validator-panel';
+import { useLanguage } from './language-provider';
 
 export default function CivicDashboard() {
+  const { t } = useLanguage();
   const [clusters, setClusters] = useState<IssueCluster[]>([]);
   const [filteredClusters, setFilteredClusters] = useState<IssueCluster[]>([]);
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysisResponse | null>(null);
@@ -129,10 +131,10 @@ export default function CivicDashboard() {
           <Tabs defaultValue="clusters" className="w-full">
             <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 h-auto gap-2">
               <TabsTrigger value="clusters" className="text-xs sm:text-sm">
-                Cluster Dashboard
+                {t('tabs.clusterDashboard')}
               </TabsTrigger>
               <TabsTrigger value="complaints" className="text-xs sm:text-sm whitespace-normal text-center">
-                Pincode Complaints Dashboard
+                {t('tabs.pincodeComplaintsDashboard')}
               </TabsTrigger>
             </TabsList>
 

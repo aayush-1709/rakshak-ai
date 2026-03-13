@@ -91,6 +91,7 @@ export interface Complaint {
   confidence_score: number;
   created_at: string;
   image_data_url?: string;
+  video_data_url?: string;
   ai_summary?: string;
 }
 
@@ -117,6 +118,7 @@ export interface SubmitIssuePayload {
   risk_level: RiskLevel;
   confidence_score?: number;
   image_data_url?: string;
+  video_data_url?: string;
   ai_summary?: string;
 }
 
@@ -130,6 +132,7 @@ export type ClusterSortBy = 'priority_score' | 'complaint_count';
 
 export interface ReportDraft {
   image: File;
+  video?: File;
   description: string;
   address: string;
   latitude: number;

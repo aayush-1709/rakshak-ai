@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Spinner } from '@/components/ui/spinner';
 import { IssueCluster } from '@/lib/types';
+import { useLanguage } from './language-provider';
 
 interface CivicMapLeafletProps {
   clusters: IssueCluster[];
@@ -141,6 +142,7 @@ export default function CivicMapLeaflet({
   isLoading = false,
   onMarkerClick,
 }: CivicMapLeafletProps) {
+  const { t } = useLanguage();
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<any>(null);
   const overlaysRef = useRef<any[]>([]);
@@ -347,7 +349,7 @@ export default function CivicMapLeaflet({
             <div className="absolute inset-0 z-[500] flex items-center justify-center bg-white/80">
               <div className="flex items-center gap-2 text-slate-700">
                 <Spinner className="w-4 h-4" />
-                Loading map data...
+                {t('map.loading')}
               </div>
             </div>
           )}
@@ -362,16 +364,16 @@ export default function CivicMapLeaflet({
 
           <div className="absolute top-3 left-3 right-3 z-10 flex items-center gap-2 overflow-x-auto pr-2">
             <Badge variant="secondary" className="bg-white/90 text-slate-700">
-              {clusters.length} Clusters
+              {clusters.length} {t('map.clusters')}
             </Badge>
             <Badge variant="secondary" className="bg-red-100 text-red-800 border border-red-200 whitespace-nowrap">
-              High: Red
+              {t('map.highRed')}
             </Badge>
             <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border border-yellow-200 whitespace-nowrap">
-              Low: Yellow
+              {t('map.lowYellow')}
             </Badge>
             <Badge variant="secondary" className="bg-green-100 text-green-800 border border-green-200 whitespace-nowrap">
-              Less/None: Green
+              {t('map.greenZone')}
             </Badge>
           </div>
         </div>

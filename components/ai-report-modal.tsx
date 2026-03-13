@@ -13,6 +13,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { toast } from 'sonner';
 import { generateReport } from '@/lib/api';
 import { CivicReport } from '@/lib/types';
+import { useLanguage } from './language-provider';
 
 interface AIReportModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ interface AIReportModalProps {
 }
 
 export default function AIReportModal({ isOpen, onClose }: AIReportModalProps) {
+  const { t } = useLanguage();
   const [report, setReport] = useState<CivicReport | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -248,23 +250,23 @@ export default function AIReportModal({ isOpen, onClose }: AIReportModalProps) {
       <DialogContent className="w-[95vw] max-w-2xl max-h-[85vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="text-xl sm:text-2xl">
-            AI-Generated Weekly Rakshak AI Report
+            {t('modal.title')}
           </DialogTitle>
           <DialogDescription className="sr-only">
-            Generated Rakshak AI report with issue, pincode, and cluster level insights.
+            {t('modal.description')}
           </DialogDescription>
         </DialogHeader>
 
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-12 gap-4">
             <Spinner />
-            <p className="text-slate-600">Generating report...</p>
+            <p className="text-slate-600">{t('modal.generating')}</p>
           </div>
         ) : error ? (
           <div className="py-10 space-y-4 text-center">
             <p className="text-red-600 text-sm">{error}</p>
             <Button onClick={handleClose} variant="outline">
-              Close
+              {t('action.close')}
             </Button>
           </div>
         ) : report ? (
@@ -274,44 +276,44 @@ export default function AIReportModal({ isOpen, onClose }: AIReportModalProps) {
               <h3 className="font-semibold text-slate-900 mb-2">{report.report_title}</h3>
               <p className="text-sm text-slate-700">{report.summary}</p>
               <p className="text-xs text-slate-500 mt-2">
-                Generated: {new Date(report.generated_at).toLocaleString()}
+                {t('complaints.registeredAt')}: {new Date(report.generated_at).toLocaleString()}
               </p>
             </div>
 
             {/* Structured report */}
             <div className="grid grid-cols-1 gap-4">
               <div className="bg-red-50 p-3 rounded-lg">
-                <p className="text-xs text-red-700 font-medium">Highest Risk Area</p>
+                <p className="text-xs text-red-700 font-medium">{t('modal.highestRiskArea')}</p>
                 <p className="text-lg font-bold text-red-900">{report.highest_risk_area}</p>
               </div>
               <div className="bg-orange-50 p-3 rounded-lg">
-                <p className="text-xs text-orange-700 font-medium">Most Common Issue</p>
+                <p className="text-xs text-orange-700 font-medium">{t('modal.mostCommonIssue')}</p>
                 <p className="text-lg font-bold text-orange-900">{report.most_common_issue}</p>
               </div>
               <div className="bg-slate-50 p-3 rounded-lg">
-                <p className="text-xs text-slate-700 font-medium">Trend Insight</p>
+                <p className="text-xs text-slate-700 font-medium">{t('modal.trendInsight')}</p>
                 <p className="text-sm text-slate-900">{report.trend_insight}</p>
               </div>
               <div className="bg-green-50 p-3 rounded-lg">
-                <p className="text-xs text-green-700 font-medium">Recommended Action</p>
+                <p className="text-xs text-green-700 font-medium">{t('modal.recommendedAction')}</p>
                 <p className="text-sm text-green-900">{report.recommended_action}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                <p className="text-xs text-slate-600 font-medium">Total Complaints</p>
+                <p className="text-xs text-slate-600 font-medium">{t('modal.totalComplaints')}</p>
                 <p className="text-xl font-bold text-slate-900">{report.total_complaints}</p>
               </div>
               <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                <p className="text-xs text-slate-600 font-medium">Total Clusters</p>
+                <p className="text-xs text-slate-600 font-medium">{t('modal.totalClusters')}</p>
                 <p className="text-xl font-bold text-slate-900">{report.total_clusters}</p>
               </div>
             </div>
 
             <div className="space-y-4">
               <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                <p className="text-xs text-slate-700 font-medium mb-2">Risk Distribution</p>
+                <p className="text-xs text-slate-700 font-medium mb-2">{t('modal.riskDistribution')}</p>
                 <div className="space-y-1">
                   {report.risk_distribution.map((item) => (
                     <p key={item.risk_level} className="text-sm text-slate-800">
@@ -322,7 +324,7 @@ export default function AIReportModal({ isOpen, onClose }: AIReportModalProps) {
               </div>
 
               <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                <p className="text-xs text-slate-700 font-medium mb-2">Issue Breakdown</p>
+                <p className="text-xs text-slate-700 font-medium mb-2">{t('modal.issueBreakdown')}</p>
                 <div className="space-y-2 max-h-44 overflow-y-auto">
                   {report.issue_breakdown.map((item) => (
                     <p key={item.issue_type} className="text-sm text-slate-800">
@@ -334,7 +336,7 @@ export default function AIReportModal({ isOpen, onClose }: AIReportModalProps) {
               </div>
 
               <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                <p className="text-xs text-slate-700 font-medium mb-2">Pincode Breakdown</p>
+                <p className="text-xs text-slate-700 font-medium mb-2">{t('modal.pincodeBreakdown')}</p>
                 <div className="space-y-2 max-h-44 overflow-y-auto">
                   {report.pincode_breakdown.map((item) => (
                     <p key={item.pincode} className="text-sm text-slate-800">
@@ -347,7 +349,7 @@ export default function AIReportModal({ isOpen, onClose }: AIReportModalProps) {
               </div>
 
               <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                <p className="text-xs text-slate-700 font-medium mb-2">Cluster Breakdown</p>
+                <p className="text-xs text-slate-700 font-medium mb-2">{t('modal.clusterBreakdown')}</p>
                 <div className="space-y-2 max-h-48 overflow-y-auto">
                   {report.cluster_breakdown.map((item) => (
                     <p key={item.cluster_id} className="text-sm text-slate-800">
@@ -360,7 +362,7 @@ export default function AIReportModal({ isOpen, onClose }: AIReportModalProps) {
               </div>
 
               <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                <p className="text-xs text-slate-700 font-medium mb-2">Recommendations</p>
+                <p className="text-xs text-slate-700 font-medium mb-2">{t('modal.recommendations')}</p>
                 <ul className="list-disc pl-5 space-y-1">
                   {report.recommendations.map((item, idx) => (
                     <li key={`${idx}-${item}`} className="text-sm text-slate-800">
@@ -377,14 +379,14 @@ export default function AIReportModal({ isOpen, onClose }: AIReportModalProps) {
                 onClick={handleDownload}
                 className="flex-1 bg-slate-900 hover:bg-slate-800 text-white"
               >
-                Download Report
+                {t('action.downloadReport')}
               </Button>
               <Button
                 onClick={handleClose}
                 variant="outline"
                 className="flex-1"
               >
-                Close
+                {t('action.close')}
               </Button>
             </div>
           </div>
