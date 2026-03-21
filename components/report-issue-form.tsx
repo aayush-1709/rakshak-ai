@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { toast } from 'sonner';
+import { X } from 'lucide-react';
 import { analyzeIssue, geocodeAddress } from '@/lib/api';
 import { AIAnalysisResponse, ReportDraft } from '@/lib/types';
 import { useLanguage } from './language-provider';
@@ -18,10 +19,19 @@ interface ReportIssueFormProps {
 
 const MAX_VIDEO_SIZE_BYTES = 12 * 1024 * 1024;
 
+function readPreviewUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(String(reader.result || ''));
+    reader.onerror = () => reject(new Error('read'));
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function ReportIssueForm({ onAnalysisComplete }: ReportIssueFormProps) {
   const { t } = useLanguage();
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
   const [description, setDescription] = useState('');
@@ -33,6 +43,24 @@ export default function ReportIssueForm({ onAnalysisComplete }: ReportIssueFormP
   const videoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const next: string[] = [];
+      for (const file of imageFiles) {
+        try {
+          next.push(await readPreviewUrl(file));
+        } catch {
+          next.push('');
+        }
+      }
+      if (!cancelled) setImagePreviews(next);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [imageFiles]);
+
+  useEffect(() => {
     if (!videoFile) {
       setVideoPreviewUrl(null);
       return;
@@ -42,15 +70,14 @@ export default function ReportIssueForm({ onAnalysisComplete }: ReportIssueFormP
     return () => URL.revokeObjectURL(objectUrl);
   }, [videoFile]);
 
-  const handleImageChange = (file: File | null) => {
-    if (file && file.type.startsWith('image/')) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
+  const addImageFiles = (files: FileList | File[]) => {
+    const list = Array.from(files).filter((f) => f.type.startsWith('image/'));
+    if (!list.length) return;
+    setImageFiles((prev) => [...prev, ...list]);
+  };
+
+  const removeImageAt = (index: number) => {
+    setImageFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -65,17 +92,16 @@ export default function ReportIssueForm({ onAnalysisComplete }: ReportIssueFormP
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    const file = e.dataTransfer.files[0];
-    handleImageChange(file);
+    addImageFiles(e.dataTransfer.files);
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) handleImageChange(file);
+    if (e.target.files?.length) addImageFiles(e.target.files);
+    e.target.value = '';
   };
 
   const handleSubmit = async () => {
-    if (!imageFile || !description.trim() || !address.trim() || !pincode.trim()) {
+    if (!imageFiles.length || !description.trim() || !address.trim() || !pincode.trim()) {
       toast.error(t('reportForm.errorFillFields'));
       return;
     }
@@ -83,8 +109,11 @@ export default function ReportIssueForm({ onAnalysisComplete }: ReportIssueFormP
     setIsAnalyzing(true);
     try {
       const coords = await geocodeAddress(address.trim(), pincode.trim());
+      const primary = imageFiles[0];
+      const additional = imageFiles.length > 1 ? imageFiles.slice(1) : undefined;
       const draft: ReportDraft = {
-        image: imageFile,
+        image: primary,
+        additionalImages: additional,
         video: videoFile || undefined,
         description: description.trim(),
         address: address.trim(),
@@ -92,7 +121,14 @@ export default function ReportIssueForm({ onAnalysisComplete }: ReportIssueFormP
         longitude: coords.longitude,
         pincode: pincode.trim(),
       };
-      const analysis = await analyzeIssue(draft);
+      const analysis = await analyzeIssue({
+        image: primary,
+        description: draft.description,
+        latitude: draft.latitude,
+        longitude: draft.longitude,
+        pincode: draft.pincode,
+        address: draft.address,
+      });
       onAnalysisComplete(analysis, draft);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t('reportForm.errorAnalyzing'));
@@ -107,50 +143,68 @@ export default function ReportIssueForm({ onAnalysisComplete }: ReportIssueFormP
         <CardTitle className="text-lg">{t('reportForm.title')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Image Upload */}
         <div>
           <Label className="text-sm font-medium text-slate-700 mb-2 block">
-            {t('reportForm.uploadImage')}
+            {t('reportForm.uploadImages')}
           </Label>
           <div
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition ${
-              isDragging
-                ? 'border-blue-500 bg-blue-50'
-                : 'border-slate-300 hover:border-slate-400'
+              isDragging ? 'border-blue-500 bg-blue-50' : 'border-slate-300 hover:border-slate-400'
             }`}
             onClick={() => fileInputRef.current?.click()}
           >
-            {imagePreview ? (
-              <div className="space-y-2">
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  className="w-full h-32 object-cover rounded-lg"
-                />
-                <p className="text-xs text-slate-600">{t('reportForm.clickToChangeImage')}</p>
-              </div>
-            ) : (
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-slate-700">
-                  {t('reportForm.dragDropImage')}
-                </p>
-                <p className="text-xs text-slate-500">{t('reportForm.clickToSelect')}</p>
-              </div>
-            )}
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-slate-700">{t('reportForm.dragDropImages')}</p>
+              <p className="text-xs text-slate-500">{t('reportForm.clickToSelectMultiple')}</p>
+            </div>
             <input
               ref={fileInputRef}
               type="file"
               accept="image/*"
+              multiple
               onChange={handleFileSelect}
               className="hidden"
             />
           </div>
+          {imageFiles.length > 0 && (
+            <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {imageFiles.map((file, idx) => (
+                <div key={`${file.name}-${idx}`} className="relative group rounded-lg border border-slate-200 overflow-hidden bg-slate-50">
+                  {imagePreviews[idx] ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- dynamic blob preview
+                    <img
+                      src={imagePreviews[idx]}
+                      alt=""
+                      className="w-full h-28 object-cover"
+                    />
+                  ) : (
+                    <div className="h-28 flex items-center justify-center text-xs text-slate-500">…</div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeImageAt(idx);
+                    }}
+                    className="absolute top-1 right-1 rounded-full bg-slate-900/80 p-1 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                    aria-label={t('action.close')}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                  {idx === 0 && (
+                    <span className="absolute bottom-1 left-1 text-[10px] font-semibold bg-slate-900 text-white px-1.5 py-0.5 rounded">
+                      {t('reportForm.primary')}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Description */}
         <div>
           <Label className="text-sm font-medium text-slate-700 mb-2 block">
             {t('reportForm.uploadVideoOptional')}
@@ -200,7 +254,6 @@ export default function ReportIssueForm({ onAnalysisComplete }: ReportIssueFormP
           </div>
         </div>
 
-        {/* Description */}
         <div>
           <Label htmlFor="description" className="text-sm font-medium text-slate-700 mb-2 block">
             {t('reportForm.description')}
@@ -214,7 +267,6 @@ export default function ReportIssueForm({ onAnalysisComplete }: ReportIssueFormP
           />
         </div>
 
-        {/* Address */}
         <div>
           <Label htmlFor="address" className="text-sm font-medium text-slate-700 mb-2 block">
             {t('reportForm.addressArea')}
@@ -228,7 +280,6 @@ export default function ReportIssueForm({ onAnalysisComplete }: ReportIssueFormP
           />
         </div>
 
-        {/* Pincode */}
         <div>
           <Label htmlFor="pincode" className="text-sm font-medium text-slate-700 mb-2 block">
             {t('reportForm.pincode')}
@@ -242,7 +293,6 @@ export default function ReportIssueForm({ onAnalysisComplete }: ReportIssueFormP
           />
         </div>
 
-        {/* Submit Button */}
         <Button
           onClick={handleSubmit}
           disabled={isAnalyzing}

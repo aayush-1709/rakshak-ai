@@ -5,6 +5,8 @@ import {
   CivicReport,
   ClusterSortBy,
   Complaint,
+  CorruptionReportPayload,
+  CorruptionReportRecord,
   ISSUE_TYPE_OPTIONS,
   IssueCluster,
   IssueFilters,
@@ -21,6 +23,13 @@ const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL ?? '').replace(/\/+$/
 
 let mockModeCache: boolean | null = null;
 let mockClustersStore: IssueCluster[] | null = null;
+let mockCorruptionReports: CorruptionReportRecord[] = [];
+/** Mock-only: IDs removed from generated complaint lists (no DB). */
+const mockDeletedComplaintIds = new Set<string>();
+
+function filterMockDeletedComplaints(list: Complaint[]): Complaint[] {
+  return list.filter((c) => !mockDeletedComplaintIds.has(c.complaint_id));
+}
 
 function randomFrom<T>(items: T[]): T {
   return items[Math.floor(Math.random() * items.length)];
@@ -163,6 +172,28 @@ async function fetchWithTimeout(
     return await fetch(input, { ...init, signal: controller.signal });
   } finally {
     clearTimeout(timeout);
+  }
+}
+
+async function fetchDeleteNoContent(
+  url: string,
+  options: { endpointLabel: string; timeoutMs?: number }
+): Promise<void> {
+  const timeoutMs = options.timeoutMs ?? REQUEST_TIMEOUT_MS;
+  const response = await fetchWithTimeout(url, { method: 'DELETE' }, timeoutMs);
+  if (!response.ok) {
+    let detail = '';
+    try {
+      const errorBody = (await response.json()) as { error?: string };
+      if (errorBody && typeof errorBody.error === 'string') {
+        detail = errorBody.error;
+      }
+    } catch {
+      // ignore non-JSON
+    }
+    throw new Error(
+      `${options.endpointLabel} failed with status ${response.status}.${detail ? ` ${detail}` : ''}`
+    );
   }
 }
 
@@ -333,12 +364,15 @@ async function mockAnalyzeIssue(
   payload: AnalyzeIssuePayload
 ): Promise<AIAnalysisResponse> {
   const risk = inferRiskLevel(payload.description);
+  const issueType = inferIssueType(payload.description);
+  const summary = `Classified as ${issueType} with ${risk.replace('_', ' ')} risk based on the description and location context.`;
   return {
-    issue_type: inferIssueType(payload.description),
+    issue_type: issueType,
     classification_confidence: clamp(Math.round(78 + Math.random() * 20), 1, 99),
     suggested_risk_level: risk,
     sla_days: risk === 'critical' ? 0 : risk === 'very_high' ? 1 : risk === 'high' ? 2 : 3,
     confidence_score: clamp(Math.round(80 + Math.random() * 19), 1, 99),
+    ai_summary: summary,
   };
 }
 
@@ -588,11 +622,12 @@ export async function chatWithCivicAI(question: string): Promise<ChatInsightResp
 
 export async function getComplaints(): Promise<Complaint[]> {
   if (shouldUseMockMode()) {
-    return ensureMockClusters().flatMap((cluster) =>
+    const list = ensureMockClusters().flatMap((cluster) =>
       Array.from({ length: cluster.complaint_count }, (_, index) =>
         makeMockComplaint(cluster, index)
       )
     );
+    return filterMockDeletedComplaints(list);
   }
 
   try {
@@ -612,15 +647,101 @@ export async function getComplaints(): Promise<Complaint[]> {
   }
 }
 
+export async function deleteComplaint(complaintId: string): Promise<void> {
+  const id = complaintId.trim();
+  if (!id) {
+    throw new Error('Complaint id is required.');
+  }
+  if (shouldUseMockMode()) {
+    mockDeletedComplaintIds.add(id);
+    return;
+  }
+  if (!API_BASE_URL) {
+    throw new Error('API base URL is not configured.');
+  }
+  await fetchDeleteNoContent(apiUrl(`/api/complaints/${encodeURIComponent(id)}`), {
+    endpointLabel: 'Delete complaint API',
+    timeoutMs: 15000,
+  });
+}
+
+async function mockSubmitCorruptionReport(
+  payload: CorruptionReportPayload
+): Promise<CorruptionReportRecord> {
+  const row: CorruptionReportRecord = {
+    id: `CRP-MOCK-${Date.now()}`,
+    description: payload.description,
+    reporter_name: payload.reporter_name,
+    phone: payload.phone,
+    department: payload.department,
+    accused_person: payload.accused_person,
+    proof_data_url: payload.proof_data_url,
+    created_at: new Date().toISOString(),
+  };
+  mockCorruptionReports = [row, ...mockCorruptionReports];
+  return row;
+}
+
+export async function submitCorruptionReport(
+  payload: CorruptionReportPayload
+): Promise<CorruptionReportRecord> {
+  if (shouldUseMockMode()) {
+    return mockSubmitCorruptionReport(payload);
+  }
+
+  try {
+    return await fetchJsonWithRetry<CorruptionReportRecord>(
+      apiUrl('/api/corruption-reports'),
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      },
+      {
+        endpointLabel: 'Corruption report API',
+        retries: 0,
+        timeoutMs: 60000,
+      }
+    );
+  } catch (error) {
+    throw new Error(
+      `Unable to submit corruption report. ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
+  }
+}
+
+export async function getCorruptionReports(): Promise<CorruptionReportRecord[]> {
+  if (shouldUseMockMode()) {
+    return [...mockCorruptionReports];
+  }
+
+  try {
+    return await fetchJsonWithRetry<CorruptionReportRecord[]>(
+      apiUrl('/api/corruption-reports'),
+      undefined,
+      {
+        endpointLabel: 'Corruption reports API',
+        retries: 1,
+        timeoutMs: 12000,
+      }
+    );
+  } catch (error) {
+    throw new Error(
+      `Unable to fetch corruption reports. ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
+  }
+}
+
 export async function getClusterComplaints(clusterId: string): Promise<Complaint[]> {
   if (shouldUseMockMode()) {
     const cluster = ensureMockClusters().find((row) => row.cluster_id === clusterId);
     if (!cluster) {
       return [];
     }
-    return Array.from({ length: cluster.complaint_count }, (_, index) =>
+    const list = Array.from({ length: cluster.complaint_count }, (_, index) =>
       makeMockComplaint(cluster, index)
     );
+    return filterMockDeletedComplaints(list);
   }
 
   const query = encodeURIComponent(clusterId);
@@ -661,6 +782,13 @@ export function filterClusters(
   if (filters.pincode) {
     const query = filters.pincode.trim();
     output = output.filter((cluster) => cluster.pincode.includes(query));
+  }
+
+  if (filters.clusterId) {
+    const q = filters.clusterId.trim().toLowerCase();
+    if (q) {
+      output = output.filter((cluster) => cluster.cluster_id.toLowerCase().includes(q));
+    }
   }
 
   if (sortBy === 'priority_score') {

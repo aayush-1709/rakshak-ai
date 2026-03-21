@@ -96,6 +96,23 @@ async function initDb() {
   await pool.query(`
     CREATE INDEX IF NOT EXISTS idx_complaints_created_at ON complaints(created_at DESC);
   `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS corruption_reports (
+      id TEXT PRIMARY KEY,
+      description TEXT NOT NULL,
+      reporter_name TEXT NOT NULL DEFAULT '',
+      phone TEXT NOT NULL DEFAULT '',
+      department TEXT NOT NULL DEFAULT '',
+      accused_person TEXT NOT NULL DEFAULT '',
+      proof_data_url TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_corruption_reports_created_at ON corruption_reports(created_at DESC);
+  `);
 }
 
 function mapRow(row) {
@@ -128,6 +145,11 @@ async function getComplaints() {
   return result.rows.map(mapRow);
 }
 
+async function deleteComplaintById(complaintId) {
+  const result = await pool.query('DELETE FROM complaints WHERE complaint_id = $1', [complaintId]);
+  return result.rowCount > 0;
+}
+
 async function addComplaint(complaint) {
   await pool.query(
     `INSERT INTO complaints (
@@ -158,8 +180,52 @@ async function addComplaint(complaint) {
   return complaint;
 }
 
+function mapCorruptionRow(row) {
+  return {
+    id: row.id,
+    description: row.description,
+    reporter_name: row.reporter_name,
+    phone: row.phone,
+    department: row.department,
+    accused_person: row.accused_person,
+    proof_data_url: row.proof_data_url || undefined,
+    created_at: new Date(row.created_at).toISOString(),
+  };
+}
+
+async function addCorruptionReport(report) {
+  await pool.query(
+    `INSERT INTO corruption_reports (
+      id, description, reporter_name, phone, department, accused_person, proof_data_url, created_at
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+    [
+      report.id,
+      report.description,
+      report.reporter_name,
+      report.phone,
+      report.department,
+      report.accused_person,
+      report.proof_data_url || null,
+      report.created_at ? new Date(report.created_at) : new Date(),
+    ]
+  );
+  return report;
+}
+
+async function getCorruptionReports() {
+  const result = await pool.query(
+    `SELECT id, description, reporter_name, phone, department, accused_person, proof_data_url, created_at
+     FROM corruption_reports
+     ORDER BY created_at DESC`
+  );
+  return result.rows.map(mapCorruptionRow);
+}
+
 module.exports = {
   initDb,
   getComplaints,
   addComplaint,
+  deleteComplaintById,
+  addCorruptionReport,
+  getCorruptionReports,
 };

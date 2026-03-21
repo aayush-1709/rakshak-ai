@@ -15,7 +15,7 @@ import { ClusterSortBy, IssueFilters, RISK_LEVELS, RiskLevel } from '@/lib/types
 import { formatRiskLabel } from '@/utils/priority';
 import { useLanguage } from './language-provider';
 
-interface FiltersPanelProps {
+export interface ClusterFiltersProps {
   onFilterChange: (filters: IssueFilters) => void;
   onSortChange: (sortBy: ClusterSortBy) => void;
   currentFilters: IssueFilters;
@@ -23,13 +23,14 @@ interface FiltersPanelProps {
   issueTypes: string[];
 }
 
-export default function FiltersPanel({
+/** Filter row only — use inside a card with the cluster table (same pattern as complaints dashboard). */
+export function ClusterFiltersControls({
   onFilterChange,
   onSortChange,
   currentFilters,
   currentSort,
   issueTypes,
-}: FiltersPanelProps) {
+}: ClusterFiltersProps) {
   const { t } = useLanguage();
   const handleRiskLevelChange = (value: string) => {
     onFilterChange({
@@ -52,18 +53,33 @@ export default function FiltersPanel({
     });
   };
 
+  const handleClusterIdChange = (value: string) => {
+    onFilterChange({
+      ...currentFilters,
+      clusterId: value.trim() || undefined,
+    });
+  };
+
   const handleReset = () => {
     onFilterChange({});
     onSortChange('priority_score');
   };
 
   return (
-    <Card className="border-slate-200 bg-white">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg">{t('filters.title')}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Cluster ID */}
+          <div>
+            <Label className="text-sm font-medium text-slate-700 mb-2 block">{t('filters.clusterId')}</Label>
+            <Input
+              placeholder={t('filters.searchByClusterId')}
+              value={currentFilters.clusterId || ''}
+              onChange={(e) => handleClusterIdChange(e.target.value)}
+              className="border-slate-300"
+              autoComplete="off"
+              spellCheck={false}
+            />
+          </div>
+
           {/* Risk Level Filter */}
           <div>
             <Label className="text-sm font-medium text-slate-700 mb-2 block">{t('filters.riskLevel')}</Label>
@@ -136,6 +152,19 @@ export default function FiltersPanel({
             </Button>
           </div>
         </div>
+  );
+}
+
+/** Standalone filters card (legacy layout). Prefer embedding via `ClusterFiltersControls` in the cluster table. */
+export default function FiltersPanel(props: ClusterFiltersProps) {
+  const { t } = useLanguage();
+  return (
+    <Card className="border-slate-200 bg-white">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg">{t('filters.title')}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ClusterFiltersControls {...props} />
       </CardContent>
     </Card>
   );

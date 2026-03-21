@@ -1,14 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getMockMode, setMockMode } from '@/lib/api';
 import AIReportModal from './ai-report-modal';
-import rakshakLogo from '../logo.png';
+import { BrandLogoFrame, BrandTextBlock } from '@/components/dashboard/dashboard-brand';
 import { useLanguage } from './language-provider';
 
 interface NavbarProps {
@@ -32,25 +30,12 @@ export default function Navbar({ onMockModeChanged }: NavbarProps) {
 
   return (
     <>
-      <nav className="border-b border-slate-200 bg-white shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 lg:px-6 py-3 sm:py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          {/* Left - Title and Status */}
-          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-            <Image
-              src={rakshakLogo}
-              alt="Rakshak AI logo"
-              width={48}
-              height={48}
-              className="h-10 w-10 sm:h-12 sm:w-12 rounded-md object-cover shrink-0"
-              priority
-            />
-            <div className="min-w-0">
-              <h1 className="text-lg sm:text-2xl font-bold text-slate-900 truncate">{t('app.name')}</h1>
-              <p className="text-[11px] sm:text-xs text-slate-500 truncate">{t('app.subtitle')}</p>
-            </div>
-            <Badge variant="secondary" className="hidden md:inline-flex bg-blue-100 text-blue-900">
-              {t('badge.publicDashboard')}
-            </Badge>
+      <nav className="border-b border-sky-100/90 bg-white shadow-[0_1px_0_rgba(255,255,255,0.8)] sticky top-0 z-50">
+        <div className="w-full px-4 lg:px-6 py-3 sm:py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between lg:justify-end">
+          {/* Mobile / tablet: branding. Desktop: shown in sidebar top-left instead */}
+          <div className="flex items-start gap-3 sm:gap-3.5 min-w-0 lg:hidden">
+            <BrandLogoFrame imgClassName="h-10 w-10 sm:h-[52px] sm:w-[52px]" />
+            <BrandTextBlock variant="navbar" className="pt-0.5" />
           </div>
 
           {/* Right - Actions */}

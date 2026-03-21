@@ -14,7 +14,11 @@ interface ChatMessage {
   content: string;
 }
 
-export default function CivicChatbot() {
+interface CivicChatbotProps {
+  contentClassName?: string;
+}
+
+export default function CivicChatbot({ contentClassName }: CivicChatbotProps = {}) {
   const { t } = useLanguage();
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -62,7 +66,12 @@ export default function CivicChatbot() {
         <CardTitle className="text-lg">{t('chatbot.title')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div className="max-h-64 overflow-y-auto rounded-md border border-slate-200 bg-slate-50 p-3 space-y-2">
+        <div
+          className={
+            contentClassName ??
+            'max-h-64 overflow-y-auto rounded-md border border-slate-200 bg-slate-50 p-3 space-y-2'
+          }
+        >
           {messages.map((message, idx) => (
             <div
               key={`${message.role}-${idx}`}

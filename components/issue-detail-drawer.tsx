@@ -7,6 +7,8 @@ import { Spinner } from '@/components/ui/spinner';
 import RiskBadge from '@/components/risk-badge';
 import { getClusterComplaints } from '@/lib/api';
 import { Complaint, IssueCluster } from '@/lib/types';
+import DeleteComplaintButton from '@/components/delete-complaint-button';
+import { useDashboardRefresh } from '@/components/dashboard/dashboard-refresh-context';
 import { X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLanguage } from './language-provider';
@@ -23,6 +25,7 @@ export default function IssueDetailDrawer({
   onClose,
 }: IssueDetailDrawerProps) {
   const { t } = useLanguage();
+  const { dataRefreshKey } = useDashboardRefresh();
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [isLoadingComplaints, setIsLoadingComplaints] = useState(false);
   const [complaintsError, setComplaintsError] = useState<string | null>(null);
@@ -51,7 +54,7 @@ export default function IssueDetailDrawer({
     };
 
     loadComplaints();
-  }, [cluster, isOpen]);
+  }, [cluster, isOpen, dataRefreshKey, t]);
 
   if (!cluster) return null;
 
@@ -151,10 +154,20 @@ export default function IssueDetailDrawer({
                     className="rounded-md border border-slate-200 bg-white p-4"
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm font-semibold text-slate-900">
+                      <p className="text-sm font-semibold text-slate-900 min-w-0 break-all pr-2">
                         #{index + 1} • {complaint.complaint_id}
                       </p>
-                      <RiskBadge level={complaint.risk_level} />
+                      <div className="flex shrink-0 items-center gap-1">
+                        <RiskBadge level={complaint.risk_level} />
+                        <DeleteComplaintButton
+                          complaintId={complaint.complaint_id}
+                          onDeleted={() =>
+                            setComplaints((prev) =>
+                              prev.filter((c) => c.complaint_id !== complaint.complaint_id)
+                            )
+                          }
+                        />
+                      </div>
                     </div>
 
                     <div className="mt-3 grid grid-cols-1 md:grid-cols-[220px_1fr] gap-4">

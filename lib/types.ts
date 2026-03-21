@@ -126,16 +126,43 @@ export interface IssueFilters {
   riskLevel?: RiskLevel;
   issueType?: string;
   pincode?: string;
+  /** Substring match on cluster_id (case-insensitive). */
+  clusterId?: string;
 }
 
 export type ClusterSortBy = 'priority_score' | 'complaint_count';
 
 export interface ReportDraft {
+  /** Primary image used for AI analyze and submission payload. */
   image: File;
+  /** Extra images shown in preview; only the primary is sent to the current API. */
+  additionalImages?: File[];
   video?: File;
   description: string;
   address: string;
   latitude: number;
   longitude: number;
   pincode: string;
+}
+
+/** Payload for POST /api/corruption-reports */
+export interface CorruptionReportPayload {
+  description: string;
+  reporter_name: string;
+  phone: string;
+  department: string;
+  accused_person: string;
+  /** Optional base64 data URL for uploaded proof */
+  proof_data_url?: string;
+}
+
+export interface CorruptionReportRecord {
+  id: string;
+  description: string;
+  reporter_name: string;
+  phone: string;
+  department: string;
+  accused_person: string;
+  proof_data_url?: string;
+  created_at: string;
 }

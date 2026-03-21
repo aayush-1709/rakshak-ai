@@ -11,10 +11,11 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import RiskBadge from '@/components/risk-badge';
+import { ClusterFiltersControls, type ClusterFiltersProps } from '@/components/filters-panel';
 import { IssueCluster } from '@/lib/types';
 import { useLanguage } from './language-provider';
 
-interface IssueClusterTableProps {
+interface IssueClusterTableProps extends ClusterFiltersProps {
   clusters: IssueCluster[];
   isLoading: boolean;
   error?: string | null;
@@ -26,6 +27,11 @@ export default function IssueClusterTable({
   isLoading,
   error,
   onClusterSelect,
+  onFilterChange,
+  onSortChange,
+  currentFilters,
+  currentSort,
+  issueTypes,
 }: IssueClusterTableProps) {
   const { t } = useLanguage();
   return (
@@ -33,7 +39,14 @@ export default function IssueClusterTable({
       <CardHeader className="pb-3">
         <CardTitle className="text-lg">{t('issueTable.title', { count: clusters.length })}</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
+        <ClusterFiltersControls
+          onFilterChange={onFilterChange}
+          onSortChange={onSortChange}
+          currentFilters={currentFilters}
+          currentSort={currentSort}
+          issueTypes={issueTypes}
+        />
         <div className="overflow-x-auto">
           <Table className="min-w-[900px]">
             <TableHeader className="bg-slate-50">

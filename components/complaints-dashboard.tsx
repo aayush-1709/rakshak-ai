@@ -20,6 +20,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import RiskBadge from '@/components/risk-badge';
+import DeleteComplaintButton from '@/components/delete-complaint-button';
 import { getComplaints } from '@/lib/api';
 import { Complaint } from '@/lib/types';
 import { toast } from 'sonner';
@@ -35,6 +36,7 @@ export default function ComplaintsDashboard({ refreshKey }: ComplaintsDashboardP
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pincodeFilter, setPincodeFilter] = useState('');
+  const [complaintIdFilter, setComplaintIdFilter] = useState('');
   const [issueTypeFilter, setIssueTypeFilter] = useState<string>('all');
 
   useEffect(() => {
@@ -63,15 +65,19 @@ export default function ComplaintsDashboard({ refreshKey }: ComplaintsDashboardP
   );
 
   const filteredComplaints = useMemo(() => {
+    const idQuery = complaintIdFilter.trim().toLowerCase();
     return complaints.filter((item) => {
       const pincodeMatch = pincodeFilter.trim()
         ? item.pincode.includes(pincodeFilter.trim())
         : true;
       const issueMatch =
         issueTypeFilter === 'all' ? true : item.issue_type === issueTypeFilter;
-      return pincodeMatch && issueMatch;
+      const idMatch = idQuery
+        ? item.complaint_id.toLowerCase().includes(idQuery)
+        : true;
+      return pincodeMatch && issueMatch && idMatch;
     });
-  }, [complaints, issueTypeFilter, pincodeFilter]);
+  }, [complaints, complaintIdFilter, issueTypeFilter, pincodeFilter]);
 
   return (
     <Card className="border-slate-200 bg-white">
@@ -81,7 +87,15 @@ export default function ComplaintsDashboard({ refreshKey }: ComplaintsDashboardP
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <Input
+            placeholder={t('complaints.searchByComplaintId')}
+            value={complaintIdFilter}
+            onChange={(event) => setComplaintIdFilter(event.target.value)}
+            className="border-slate-300"
+            autoComplete="off"
+            spellCheck={false}
+          />
           <Input
             placeholder={t('complaints.searchByPincode')}
             value={pincodeFilter}
@@ -104,7 +118,7 @@ export default function ComplaintsDashboard({ refreshKey }: ComplaintsDashboardP
         </div>
 
         <div className="overflow-x-auto">
-          <Table className="min-w-[860px]">
+          <Table className="min-w-[920px]">
             <TableHeader className="bg-slate-50">
               <TableRow className="border-slate-200">
                 <TableHead>{t('complaints.complaintId')}</TableHead>
@@ -114,13 +128,14 @@ export default function ComplaintsDashboard({ refreshKey }: ComplaintsDashboardP
                 <TableHead>{t('issueTable.risk')}</TableHead>
                 <TableHead>{t('complaints.status')}</TableHead>
                 <TableHead>{t('complaints.address')}</TableHead>
+                <TableHead className="w-[52px] text-right">{t('complaints.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading
                 ? Array.from({ length: 8 }).map((_, rowIdx) => (
                     <TableRow key={`complaint-sk-${rowIdx}`} className="border-slate-200">
-                      {Array.from({ length: 7 }).map((__, colIdx) => (
+                      {Array.from({ length: 8 }).map((__, colIdx) => (
                         <TableCell key={`complaint-sk-${rowIdx}-${colIdx}`}>
                           <Skeleton className="h-4 w-full" />
                         </TableCell>
@@ -130,7 +145,7 @@ export default function ComplaintsDashboard({ refreshKey }: ComplaintsDashboardP
                 : error
                   ? (
                     <TableRow className="border-slate-200">
-                      <TableCell colSpan={7} className="text-center py-8 text-red-600">
+                      <TableCell colSpan={8} className="text-center py-8 text-red-600">
                         {error}
                       </TableCell>
                     </TableRow>
@@ -151,11 +166,14 @@ export default function ComplaintsDashboard({ refreshKey }: ComplaintsDashboardP
                           </TableCell>
                           <TableCell className="text-sm">{complaint.status}</TableCell>
                           <TableCell className="text-sm">{complaint.address}</TableCell>
+                          <TableCell className="text-right">
+                            <DeleteComplaintButton complaintId={complaint.complaint_id} />
+                          </TableCell>
                         </TableRow>
                       ))
                     : (
                       <TableRow className="border-slate-200">
-                        <TableCell colSpan={7} className="text-center py-8 text-slate-500">
+                        <TableCell colSpan={8} className="text-center py-8 text-slate-500">
                           {t('complaints.noComplaints')}
                         </TableCell>
                       </TableRow>

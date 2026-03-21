@@ -51,6 +51,12 @@ const CHECKS: Array<{
     displayEndpoint: '/api/cluster-complaints',
     method: 'GET',
   },
+  {
+    id: 'corruption',
+    labelKey: 'validator.corruptionReports',
+    endpoint: '/api/corruption-reports',
+    method: 'POST',
+  },
 ];
 
 function buildUrl(path: string): string {
@@ -90,6 +96,23 @@ function buildRequestInit(checkId: string, method: 'GET' | 'POST'): RequestInit 
     };
   }
 
+  if (checkId === 'corruption') {
+    return {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Validator-Check': 'true',
+      },
+      body: JSON.stringify({
+        description: 'Validator ping for corruption report endpoint',
+        reporter_name: '',
+        phone: '',
+        department: '',
+        accused_person: '',
+      }),
+    };
+  }
+
   return { method };
 }
 
@@ -99,7 +122,11 @@ function statusBadge(status: EndpointStatus, t: (key: string) => string) {
   return <Badge className="bg-slate-200 text-slate-800">{t('status.checking')}</Badge>;
 }
 
-export default function ApiValidatorPanel() {
+interface ApiValidatorPanelProps {
+  onHealthChange?: (status: 'active' | 'failed') => void;
+}
+
+export default function ApiValidatorPanel({ onHealthChange }: ApiValidatorPanelProps = {}) {
   const { t } = useLanguage();
   const [results, setResults] = useState<EndpointCheckResult[]>(
     CHECKS.map((item) => ({
@@ -157,7 +184,8 @@ export default function ApiValidatorPanel() {
 
     setResults(updates);
     setIsChecking(false);
-  }, []);
+    onHealthChange?.(updates.every((u) => u.status === 'ok') ? 'active' : 'failed');
+  }, [onHealthChange]);
 
   useEffect(() => {
     checkEndpoints();

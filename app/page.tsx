@@ -1,9 +1,5 @@
-import CivicDashboard from '@/components/civic-dashboard';
+import { redirect } from 'next/navigation';
 
 export default function Home() {
-  return (
-    <main className="min-h-screen font-sans">
-      <CivicDashboard />
-    </main>
-  );
+  redirect('/complaints');
 }

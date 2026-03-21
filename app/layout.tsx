@@ -18,7 +18,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: 'Rakshak AI | Public Complaint Dashboard',
   description: 'AI-powered public complaint dashboard for monitoring and analyzing urban infrastructure issues',
-  generator: 'v0.app',
+  generator: 'aayush',
   icons: {
     icon: rakshakLogo.src,
     apple: rakshakLogo.src,
