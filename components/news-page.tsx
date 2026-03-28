@@ -28,7 +28,8 @@ import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useLanguage } from '@/components/language-provider';
-import { Plus, Newspaper, Trash2 } from 'lucide-react';
+import { ExternalLink, Plus, Newspaper, Trash2 } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 
 const STORAGE_KEY = 'rakshak-news-items';
 
@@ -39,6 +40,8 @@ type NewsItem = {
   category: string;
   createdAt: string;
   imageDataUrl?: string;
+  /** Set for RSS / web headlines — opens original article; not stored locally. */
+  sourceUrl?: string;
 };
 
 function loadFromStorage(): NewsItem[] {
@@ -81,9 +84,38 @@ export default function NewsPage() {
   const [detailItem, setDetailItem] = useState<NewsItem | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [mcdNews, setMcdNews] = useState<NewsItem[]>([]);
+  const [mcdLoading, setMcdLoading] = useState(true);
+  const [mcdError, setMcdError] = useState<string | null>(null);
 
   useEffect(() => {
     setItems(loadFromStorage());
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadMcd() {
+      setMcdLoading(true);
+      setMcdError(null);
+      try {
+        const res = await fetch('/api/mcd-news');
+        const data = (await res.json()) as { items?: NewsItem[]; error?: string };
+        if (cancelled) return;
+        setMcdNews((data.items ?? []).slice(0, 6));
+        setMcdError(!data.items?.length && data.error ? data.error : null);
+      } catch {
+        if (!cancelled) {
+          setMcdError('network');
+          setMcdNews([]);
+        }
+      } finally {
+        if (!cancelled) setMcdLoading(false);
+      }
+    }
+    loadMcd();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -290,21 +322,37 @@ export default function NewsPage() {
                   {detailItem.description}
                 </p>
                 <DialogFooter className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-between sm:gap-0">
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    className="gap-1.5"
-                    onClick={() => {
-                      setDeleteTargetId(detailItem.id);
-                      setDeleteConfirmOpen(true);
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" aria-hidden />
-                    {t('newsPage.delete')}
-                  </Button>
-                  <Button type="button" variant="outline" onClick={() => setDetailItem(null)}>
-                    {t('action.close')}
-                  </Button>
+                  {detailItem.sourceUrl ? (
+                    <>
+                      <Button type="button" variant="outline" onClick={() => setDetailItem(null)}>
+                        {t('action.close')}
+                      </Button>
+                      <Button type="button" className="gap-2 bg-sky-700 hover:bg-sky-800 text-white" asChild>
+                        <a href={detailItem.sourceUrl} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="h-4 w-4 shrink-0" aria-hidden />
+                          {t('newsPage.readFullArticle')}
+                        </a>
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        className="gap-1.5"
+                        onClick={() => {
+                          setDeleteTargetId(detailItem.id);
+                          setDeleteConfirmOpen(true);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" aria-hidden />
+                        {t('newsPage.delete')}
+                      </Button>
+                      <Button type="button" variant="outline" onClick={() => setDetailItem(null)}>
+                        {t('action.close')}
+                      </Button>
+                    </>
+                  )}
                 </DialogFooter>
               </div>
             </>
@@ -336,8 +384,47 @@ export default function NewsPage() {
         </AlertDialogContent>
       </AlertDialog>
 
+      <div className="space-y-2">
+        <div>
+          <h2 className="text-sm font-semibold text-slate-800">{t('newsPage.mcdHeadlines')}</h2>
+          <p className="text-xs text-slate-500 mt-1 mb-3">{t('newsPage.mcdHeadlinesHint')}</p>
+        </div>
+        {mcdLoading ? (
+          <div className="flex items-center justify-center gap-2 py-12 text-sm text-slate-500 border border-dashed border-slate-200 rounded-lg bg-slate-50/80">
+            <Spinner className="h-5 w-5" />
+          </div>
+        ) : mcdError && mcdNews.length === 0 ? (
+          <p className="text-sm text-amber-800 border border-amber-200 rounded-lg p-4 bg-amber-50/90">
+            {t('newsPage.mcdFetchError')}
+          </p>
+        ) : mcdNews.length === 0 ? (
+          <p className="text-sm text-slate-500 border border-dashed border-slate-200 rounded-lg p-6 text-center bg-slate-50/80">
+            {t('newsPage.mcdEmpty')}
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            {mcdNews.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setDetailItem(item)}
+                className="group flex min-h-[5.25rem] flex-col rounded-lg border border-sky-100 bg-gradient-to-b from-white to-sky-50/40 p-3.5 text-left shadow-sm transition hover:border-sky-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2"
+                aria-label={`${t('newsPage.openArticle')}: ${item.title}`}
+              >
+                <Badge variant="secondary" className="w-fit text-[10px] px-2 py-0.5 font-medium bg-sky-100 text-sky-900">
+                  {item.category}
+                </Badge>
+                <span className="mt-2 block text-sm font-semibold leading-snug text-slate-900 line-clamp-3 group-hover:text-slate-800">
+                  {item.title}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
       <div>
-        <h2 className="text-sm font-semibold text-slate-800 mb-3">{t('newsPage.listTitle')}</h2>
+        <h2 className="text-sm font-semibold text-slate-800 mb-3">{t('newsPage.localListTitle')}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
           {items.length === 0 ? (
             <p className="text-sm text-slate-500 border border-dashed border-slate-200 rounded-lg p-6 text-center bg-slate-50/80 col-span-full">

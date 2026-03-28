@@ -8,10 +8,10 @@ import {
   LayoutDashboard,
   MessageSquare,
   Newspaper,
-  Shield,
   Users,
   FileBarChart,
   Settings,
+  TrendingUp,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/components/language-provider';
@@ -19,6 +19,7 @@ import { useLanguage } from '@/components/language-provider';
 const NAV = [
   { href: '/report', key: 'nav.report', icon: FileText },
   { href: '/complaints', key: 'nav.complaints', icon: LayoutDashboard },
+  { href: '/forecast', key: 'nav.forecast', icon: TrendingUp },
   { href: '/ai-assistant', key: 'nav.aiAssistant', icon: MessageSquare },
   { href: '/corruption', key: 'nav.corruption', icon: AlertTriangle },
   { href: '/public-complaints', key: 'nav.publicComplaints', icon: Users },
